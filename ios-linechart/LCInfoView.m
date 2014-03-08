@@ -7,8 +7,7 @@
 //
 
 #import "LCInfoView.h"
-#import "UIKit+DrawingHelpers.h"
-
+#import "LCDrawingHelper.h"
 
 @interface LCInfoView ()
 

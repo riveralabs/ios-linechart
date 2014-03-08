@@ -9,11 +9,11 @@ Pod::Spec.new do |s|
 
   s.authors       = { "Marcel Ruegenberg" => "github@dustlab.com", "Axel Rivera" => "axel@axelrivera.me" }
 
-  s.source       = { :git => "https://github.com/mruegenberg/ios-linechart.git", :tag => "1.2.0" }
+  s.source       = { :git => "https://github.com/riveralabs/ios-linechart.git", :tag => "1.2.1" }
 
   s.platform     = :ios, '5.0'
 
-  s.source_files = 'ios-linechart/LCLegendView.{h,m}', 'ios-linechart/LCLineChartView.{h,m}', 'ios-linechart/LCInfoView.{h,m}', 'ios-linechart/LineChart.h'
+  s.source_files = 'ios-linechart/LCLegendView.{h,m}', 'ios-linechart/LCLineChartView.{h,m}', 'ios-linechart/LCInfoView.{h,m}', 'ios-linechart/LineChart.h', 'ios-linechart/LCDrawingHelper.h'
 
   s.frameworks = 'CoreFoundation', 'UIKit', 'CoreGraphics'
 
