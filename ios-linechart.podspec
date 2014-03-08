@@ -1,13 +1,13 @@
 Pod::Spec.new do |s|
   s.name         = "ios-linechart"
-  s.version      = "1.2.0"
+  s.version      = "1.2.1"
   s.summary      = "Interactive line charts / plots for the simplicity-loving iOS developer."
   s.homepage     = "https://github.com/mruegenberg/ios-linechart"
   s.screenshots  = "https://raw.github.com/mruegenberg/ios-linechart/master/doc/screenshot1.png", "https://raw.github.com/mruegenberg/ios-linechart/master/doc/screenshot2.png"
 
   s.license      =  { :type => 'MIT', :file => 'LICENSE' }
 
-  s.author       = { "Marcel Ruegenberg" => "github@dustlab.com" }
+  s.authors       = { "Marcel Ruegenberg" => "github@dustlab.com", "Axel Rivera" => "axel@axelrivera.me" }
 
   s.source       = { :git => "https://github.com/mruegenberg/ios-linechart.git", :tag => "1.2.0" }
 
@@ -18,6 +18,4 @@ Pod::Spec.new do |s|
   s.frameworks = 'CoreFoundation', 'UIKit', 'CoreGraphics'
 
   s.requires_arc = true
-
-  s.dependency 'objc-utils', '~> 0.3.3'
 end
