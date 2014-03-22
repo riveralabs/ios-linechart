@@ -10,6 +10,64 @@
 #import "LCLegendView.h"
 #import "LCInfoView.h"
 
+static NSDateFormatter *_dateFormatter;
+static NSDateFormatter *_yearFormatter;
+static NSDateFormatter *_monthFormatter;
+
+@interface NSDate (LCLineChartView)
+
+- (BOOL)isJanuary;
+
+@end
+
+@implementation NSDate (LCLineChartView)
+
+- (BOOL)isJanuary
+{
+    NSCalendar *calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar];
+    NSInteger month = [[calendar components:NSMonthCalendarUnit fromDate:self] month];
+    return month == 1 ? YES : NO; // Jan = 1
+}
+
+@end
+
+@interface NSDateFormatter (LCLineChartView)
+
++ (NSDateFormatter *)lc_dateFormatter;
+
+@end
+
+@implementation NSDateFormatter (LCLineChartView)
+
++ (NSDateFormatter *)lc_dateFormatter
+{
+    if (_dateFormatter == nil) {
+        _dateFormatter = [[NSDateFormatter alloc] init];
+        _dateFormatter.dateFormat = @"yyyy-MM-dd";
+    }
+    return _dateFormatter;
+}
+
++ (NSDateFormatter *)lc_monthFormatter
+{
+    if (_monthFormatter == nil) {
+        _monthFormatter = [[NSDateFormatter alloc] init];
+        _monthFormatter.dateFormat = @"MMM";
+    }
+    return _monthFormatter;
+}
+
++ (NSDateFormatter *)lc_yearFormatter
+{
+    if (_yearFormatter == nil) {
+        _yearFormatter = [[NSDateFormatter alloc] init];
+        _yearFormatter.dateFormat = @"yyyy";
+    }
+    return _yearFormatter;
+}
+
+@end
+
 @interface LCLineChartDataItem ()
 
 @property (readwrite) float x; // should be within the x range
@@ -43,9 +101,17 @@
 
 @implementation LCLineChartData
 
+- (id)init
+{
+    self = [super init];
+    if (self) {
+        _lineWidth = 1.0;
+        _smoothPlot = NO;
+    }
+    return self;
+}
+
 @end
-
-
 
 @interface LCLineChartView ()
 
@@ -82,7 +148,7 @@
     
     self.xAxisLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 50, 20)];
     self.xAxisLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
-    self.xAxisLabel.font = [UIFont boldSystemFontOfSize:10];
+    self.xAxisLabel.font = [UIFont systemFontOfSize:10.0];
     self.xAxisLabel.textColor = self.axisLabelColor;
     self.xAxisLabel.textAlignment = NSTextAlignmentCenter;
     self.xAxisLabel.alpha = 0.0;
@@ -97,6 +163,7 @@
     
     self.drawsDataPoints = YES;
     self.drawsDataLines  = YES;
+    self.enableIndicator = NO;
 }
 
 - (id)initWithCoder:(NSCoder *)aDecoder {
@@ -147,7 +214,7 @@
     
     [self.xAxisLabel sizeToFit];
     r = self.xAxisLabel.frame;
-    r.origin.y = self.frame.size.height - X_AXIS_SPACE - PADDING + 2;
+    r.origin.y = self.frame.size.height - X_AXIS_SPACE - PADDING + 5;
     self.xAxisLabel.frame = r;
     
     [self bringSubviewToFront:self.legendView];
@@ -183,26 +250,29 @@
     CGFloat xStart = PADDING + self.yAxisLabelsWidth;
     CGFloat yStart = PADDING;
     
-    static CGFloat dashedPattern[] = {4,2};
+    static CGFloat dashedPattern[] = {1,1};
     
     // draw scale and horizontal lines
     CGFloat heightPerStep = self.ySteps == nil || [self.ySteps count] == 0 ? availableHeight : (availableHeight / ([self.ySteps count] - 1));
     
     NSUInteger i = 0;
     CGContextSaveGState(c);
-    CGContextSetLineWidth(c, 1.0);
+    CGContextSetLineWidth(c, 0.5);
     NSUInteger yCnt = [self.ySteps count];
     for(NSString *step in self.ySteps) {
         [self.axisLabelColor set];
         CGFloat h = [self.scaleFont lineHeight];
         CGFloat y = yStart + heightPerStep * (yCnt - 1 - i);
-        // TODO: replace with new text APIs in iOS 7 only version
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        [step drawInRect:CGRectMake(yStart, y - h / 2, self.yAxisLabelsWidth - 6, h) withFont:self.scaleFont lineBreakMode:NSLineBreakByClipping alignment:NSTextAlignmentRight];
-#pragma clagn diagnostic pop
         
-        [[UIColor colorWithWhite:0.9 alpha:1.0] set];
+        NSDictionary *attributes = @{ NSFontAttributeName : self.scaleFont,
+                                      NSForegroundColorAttributeName : self.axisLabelColor };
+        
+//        [step drawInRect: withFont:self.scaleFont lineBreakMode:NSLineBreakByClipping alignment:NSTextAlignmentRight];
+        
+        [step drawInRect:CGRectMake(yStart, y - h / 2, self.yAxisLabelsWidth - 6, h)
+          withAttributes:attributes];
+        
+        [[UIColor colorWithWhite:0.8 alpha:1.0] set];
         CGContextSetLineDash(c, 0, dashedPattern, 2);
         CGContextMoveToPoint(c, xStart, round(y) + 0.5);
         CGContextAddLineToPoint(c, self.bounds.size.width - PADDING, round(y) + 0.5);
@@ -210,19 +280,58 @@
         
         i++;
     }
+//    
+//    NSUInteger xCnt = self.xStepsCount;
+//    if(xCnt > 1) {
+//        CGFloat widthPerStep = availableWidth / (xCnt - 1);
+//        
+//        //[[UIColor grayColor] set];
+//        for(NSUInteger i = 0; i < xCnt; ++i) {
+//            [self.axisLabelColor set];
+//            CGFloat x = xStart + widthPerStep * (xCnt - 1 - i);
+//            
+//            
+//            NSString *dateStr = [[NSDateFormatter lc_dateFormatter] stringFromDate:[NSDate dateWithTimeIntervalSince1970:round(x)]];
+//            
+//#pragma clang diagnostic push
+//#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+//            [dateStr drawInRect:CGRectMake(round(x),
+//                                           self.frame.size.height - X_AXIS_SPACE - PADDING + 5,
+//                                           50.0,
+//                                           16.0)
+//                       withFont:self.scaleFont
+//                  lineBreakMode:NSLineBreakByClipping
+//                      alignment:NSTextAlignmentCenter];
+//#pragma clagn diagnostic pop
+//            
+//            [[UIColor colorWithWhite:0.8 alpha:1.0] set];
+//            CGContextMoveToPoint(c, round(x) + 0.5, PADDING);
+//            CGContextAddLineToPoint(c, round(x) + 0.5, yStart + availableHeight);
+//            CGContextStrokePath(c);
+//        }
+//    }
     
-    NSUInteger xCnt = self.xStepsCount;
-    if(xCnt > 1) {
-        CGFloat widthPerStep = availableWidth / (xCnt - 1);
-        
-        [[UIColor grayColor] set];
-        for(NSUInteger i = 0; i < xCnt; ++i) {
-            CGFloat x = xStart + widthPerStep * (xCnt - 1 - i);
+    if (self.xSteps && [self.xSteps count] > 0) {
+        float xRangeLen = self.xMax - self.xMin;
+        for (NSDate *date in self.xSteps) {
+            CGFloat x = [date timeIntervalSince1970];
+            CGFloat xVal = round((xRangeLen == 0 ? 0.0 : ((x - self.xMin) / xRangeLen)) * availableWidth);
+            NSString *dateStr = nil;
+            if ([date isJanuary]) {
+                dateStr = [[NSDateFormatter lc_yearFormatter] stringFromDate:date];
+            } else {
+                dateStr = [[NSDateFormatter lc_monthFormatter] stringFromDate:date];
+            }
             
-            [[UIColor colorWithWhite:0.9 alpha:1.0] set];
-            CGContextMoveToPoint(c, round(x) + 0.5, PADDING);
-            CGContextAddLineToPoint(c, round(x) + 0.5, yStart + availableHeight);
-            CGContextStrokePath(c);
+            NSDictionary *attributes = @{ NSFontAttributeName : self.scaleFont,
+                                          NSForegroundColorAttributeName : self.axisLabelColor };
+            CGSize size = [dateStr sizeWithAttributes:attributes];
+            
+            [dateStr drawInRect:CGRectMake(xStart + xVal,
+                                           self.frame.size.height - X_AXIS_SPACE - PADDING + 5,
+                                           size.width,
+                                           size.height)
+                 withAttributes:attributes];
         }
     }
     
@@ -253,7 +362,7 @@
                     CGFloat yDiff = y - prevY;
                     
                     if(xDiff != 0) {
-                        CGFloat xSmoothing = self.smoothPlot ? MIN(30,xDiff) : 0;
+                        CGFloat xSmoothing = data.smoothPlot || self.smoothPlot ? MIN(30,xDiff) : 0;
                         CGFloat ySmoothing = 0.5;
                         CGFloat slope = yDiff / xDiff;
                         CGPoint controlPt1 = CGPointMake(prevX + xSmoothing, prevY + ySmoothing * slope * xSmoothing);
@@ -263,18 +372,14 @@
                     else {
                         CGPathAddLineToPoint(path, NULL, x, y);
                     }
+                                        
                     prevX = x;
                     prevY = y;
                 }
                 
                 CGContextAddPath(c, path);
-                CGContextSetStrokeColorWithColor(c, [self.backgroundColor CGColor]);
-                CGContextSetLineWidth(c, 5);
-                CGContextStrokePath(c);
-                
-                CGContextAddPath(c, path);
                 CGContextSetStrokeColorWithColor(c, [data.color CGColor]);
-                CGContextSetLineWidth(c, 2);
+                CGContextSetLineWidth(c, data.lineWidth);
                 CGContextStrokePath(c);
                 
                 CGPathRelease(path);
@@ -387,19 +492,27 @@
 }
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
-    [self showIndicatorForTouch:[touches anyObject]];
+    if (self.enableIndicator) {
+        [self showIndicatorForTouch:[touches anyObject]];
+    }
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
-    [self showIndicatorForTouch:[touches anyObject]];	
+    if (self.enableIndicator) {
+        [self showIndicatorForTouch:[touches anyObject]];
+    }
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
-    [self hideIndicator];
+    if (self.enableIndicator) {
+        [self hideIndicator];
+    }
 }
 
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event {
-    [self hideIndicator];
+    if (self.enableIndicator) {
+        [self hideIndicator];
+    }
 }
 
 
@@ -413,7 +526,7 @@
 - (CGFloat)yAxisLabelsWidth {
     float maxV = 0;
     for(NSString *label in self.ySteps) {
-        CGSize labelSize = [label sizeWithFont:self.scaleFont];
+        CGSize labelSize = [label sizeWithAttributes:@{ NSFontAttributeName : self.scaleFont }];
         if(labelSize.width > maxV) maxV = labelSize.width;
     }
     return maxV + PADDING;

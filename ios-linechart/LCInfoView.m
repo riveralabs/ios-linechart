@@ -7,7 +7,6 @@
 //
 
 #import "LCInfoView.h"
-#import "LCDrawingHelper.h"
 
 @interface LCInfoView ()
 
@@ -20,13 +19,11 @@
 
 - (id)initWithFrame:(CGRect)frame {
     if ((self = [super initWithFrame:frame])) {		
-        UIFont *fatFont = [UIFont boldSystemFontOfSize:12];
+        UIFont *fatFont = [UIFont systemFontOfSize:8.0];
         
         self.infoLabel = [[UILabel alloc] init]; self.infoLabel.font = fatFont;
         self.infoLabel.backgroundColor = [UIColor clearColor]; self.infoLabel.textColor = [UIColor whiteColor];
         self.infoLabel.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleWidth;
-        self.infoLabel.shadowColor = [UIColor blackColor];
-        self.infoLabel.shadowOffset = CGSizeMake(0, -1);
         self.infoLabel.textAlignment = NSTextAlignmentCenter;
         [self addSubview:self.infoLabel];
         
@@ -46,9 +43,9 @@
 #define LEFT_RIGHT_MARGIN 15
 #define SHADOWSIZE 3
 #define SHADOWBLUR 5
-#define HOOK_SIZE 8
+#define HOOK_SIZE 4
 
-void CGContextAddRoundedRectWithHookSimple(CGContextRef c, CGRect rect, CGFloat radius) {
+static void CGContextAddRoundedRectWithHookSimple(CGContextRef c, CGRect rect, CGFloat radius) {
 	//eventRect must be relative to rect.
 	CGFloat hookSize = HOOK_SIZE;
 	CGContextAddArc(c, rect.origin.x + radius, rect.origin.y + radius, radius, M_PI, M_PI * 1.5, 0); //upper left corner
@@ -107,16 +104,8 @@ void CGContextAddRoundedRectWithHookSimple(CGContextRef c, CGRect rect, CGFloat 
     CGContextSetShadow(c, CGSizeMake(0.0, SHADOWSIZE), SHADOWBLUR);
 	
 	CGContextBeginPath(c);
-    CGContextAddRoundedRectWithHookSimple(c, theRect, 7);
+    CGContextAddRoundedRectWithHookSimple(c, theRect, 3);
 	CGContextFillPath(c);
-	
-    [[UIColor whiteColor] set];
-	theRect.origin.x += 1;
-	theRect.origin.y += 1;
-	theRect.size.width -= 2;
-	theRect.size.height = theRect.size.height / 2 + 1;
-	CGContextSetAlpha(c, 0.2);
-    CGContextFillRoundedRect(c, theRect, 6);
 }
 
 

@@ -33,6 +33,9 @@ typedef LCLineChartDataItem *(^LCLineChartDataGetter)(NSUInteger item);
 @property (copy) NSString *title;
 @property NSUInteger itemCount;
 
+@property CGFloat lineWidth;
+@property BOOL smoothPlot;
+
 @property float xMin;
 @property float xMax;
 
@@ -50,6 +53,9 @@ typedef LCLineChartDataItem *(^LCLineChartDataGetter)(NSUInteger item);
 @property float yMax;
 @property (strong) NSArray *ySteps; /// Array of step names (NSString). At each step, a scale line is shown.
 @property NSUInteger xStepsCount; /// number of steps in x. At each x step, a vertical scale line is shown. if x < 2, nothing is done
+@property float xMin;
+@property float xMax;
+@property (strong) NSArray *xSteps;
 
 @property BOOL smoothPlot; /// draw a smoothed Bezier plot? Default: NO
 @property BOOL drawsDataPoints; /// Switch to turn off circles on data points. On by default.
@@ -57,6 +63,8 @@ typedef LCLineChartDataItem *(^LCLineChartDataGetter)(NSUInteger item);
 
 @property (strong) UIFont *scaleFont; /// Font in which scale markings are drawn. Defaults to [UIFont systemFontOfSize:10].
 @property (nonatomic,strong) UIColor *axisLabelColor;
+
+@property BOOL enableIndicator;
 
 - (void)showLegend:(BOOL)show animated:(BOOL)animated;
 
